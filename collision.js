@@ -3,6 +3,13 @@ class Collider{
     constructor(pos, sz, parent){
         this.pos = pos
         this.sz = sz
+        this.points = [
+            this.pos.copy(),
+            this.pos.copy().add(this.sz.x, 0),
+            this.pos.copy().add(this.sz.x, this.sz.y),
+            this.pos.copy().add(0, this.sz.y)            
+        ]
+
         // this.sz.x -= 1
         // this.sz.y -= 1
         this.parent = parent
@@ -40,6 +47,130 @@ class Collider{
         rect(this.pos.x, this.pos.y,
             this.sz.x-1, this.sz.y-1)
         pop()
+    }
+
+    calculateCollision(others, newPos, oldPos, vel){
+        let updatedPosition = newPos.copy()
+        const oldPosTiled = GameObject.toGridPos(oldPos)
+    
+        const updatedCollisions = [false, false, false, false]
+        if (vel.x <= 0){
+            const indexTile = GameObject.toGridPos(updatedPosition)
+
+            const leftTopTile = GameObject.getTile(indexTile.x, oldPosTiled.y)
+            const leftBotTile = GameObject.getTile(indexTile.x, oldPosTiled.y+1.9)
+
+            // console.log(indexTile)
+            let collided = false
+            if (leftTopTile){
+                if (leftTopTile.collisionReactions(0)){
+                    collided = true
+                }
+            }
+
+            if (leftBotTile){
+                if (leftBotTile.collisionReactions(0)){
+                    collided = true
+                }
+            }
+
+            if (collided){
+                // console.log("Collision going left!")
+                const offSetX = indexTile.copy()
+                offSetX.x = Math.floor(offSetX.x+1)
+                updatedPosition.x = GameObject.fromGridPos(offSetX).x
+                updatedCollisions[0] = true
+            }
+        } else {
+            const indexTile = GameObject.toGridPos(updatedPosition)
+
+            const rightTopTile = GameObject.getTile(indexTile.x+1, oldPosTiled.y)
+            const rightBotTile = GameObject.getTile(indexTile.x+1, oldPosTiled.y+1.9)
+
+            // console.log(indexTile)
+
+            let collided = false
+            if (rightTopTile){
+                if (rightTopTile.collisionReactions(1)){
+                    collided = true
+                }
+            }
+
+            if (rightBotTile){
+                if (rightBotTile.collisionReactions(1)){
+                    collided = true
+                }
+            }
+
+            if (collided){
+                // console.log("Collision going right!")
+                const offSetX = indexTile.copy()
+                offSetX.x = Math.floor(offSetX.x)
+                updatedPosition.x = GameObject.fromGridPos(offSetX).x
+                updatedCollisions[1] = true
+            }
+        }
+
+        if (vel.y <= 0){
+            const indexTile = GameObject.toGridPos(updatedPosition)
+
+            const leftTopTile = GameObject.getTile(indexTile.x, indexTile.y)
+            const rightTopTile = GameObject.getTile(indexTile.x+0.9, indexTile.y)
+
+            // console.log(indexTile)
+            let collided = false
+            if (leftTopTile){
+                if (leftTopTile.collisionReactions(2)){
+                    collided = true
+                }
+            }
+
+            if (rightTopTile){
+                if (rightTopTile.collisionReactions(2)){
+                    collided = true
+                }
+            }
+
+            if (collided){
+                // console.log("Collision going up!")
+                const offSetY = indexTile.copy()
+                offSetY.y = Math.floor(offSetY.y+1)
+                updatedPosition.y = GameObject.fromGridPos(offSetY).y
+                updatedCollisions[2] = true
+            }
+        } else {
+            const indexTile = GameObject.toGridPos(updatedPosition)
+
+            const leftBotTile = GameObject.getTile(indexTile.x, indexTile.y+2)
+            const rightBotTile = GameObject.getTile(indexTile.x+0.9, indexTile.y+2)
+
+            // console.log(indexTile)
+            let collided = false
+            if (leftBotTile){
+                if (leftBotTile.collisionReactions(3)){
+                    collided = true
+                }
+            }
+
+            if (rightBotTile){
+                if (rightBotTile.collisionReactions(3)){
+                    collided = true
+                }
+            }
+
+            if (collided){
+                // console.log("Collision going down!")
+                const offSetY = indexTile.copy()
+                offSetY.y = Math.floor(offSetY.y)
+                updatedPosition.y = GameObject.fromGridPos(offSetY).y
+                updatedCollisions[3] = true
+            }
+        }
+
+        return {
+            position: updatedPosition,
+            collisions: updatedCollisions
+        }
     }
 
     static calculateCollision(a, b, considerVelocity) {

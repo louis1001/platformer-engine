@@ -1,15 +1,38 @@
 
 class GameObject{
-  constructor (name, pos){
+  constructor (name, pos, cellSize=16){
     this.name = name
     this.pos = pos
     this.vel = createVector()
     this.acc = createVector()
+    
+    GameObject.cellSize = cellSize
 
     this.animations = Sprites.getAnimation(name)
     this.state = ''
 
     this.setupCollisions()
+  }
+
+  static getTile(){
+    return null
+  }
+
+  gridPos(){
+    return GameObject.toGridPos(this.pos)
+  }
+
+  static toGridPos(vec){
+    const newVec = vec.copy().div(GameObject.cellSize)
+    // newVec.x = Math.round(newVec.x)
+    // newVec.y = Math.round(newVec.y)
+
+    return newVec
+  }
+
+  static fromGridPos(vec){
+    const newVec = vec.copy().mult(GameObject.cellSize)
+    return newVec
   }
 
   setupCollisions () {
@@ -31,27 +54,46 @@ class GameObject{
             this.colliders[animName][i] = theCollider
         })
     })
+
+    this.lastCollisions = [false, false, false, false]
+    
+    this.collisionReactions = (col)=>{
+      const currentAnimation = this.animations[this.state]
+      const currentSprite = currentAnimation.getCurrent()
+
+      return currentSprite.colReaction(col)
+    }
   }
 
-  commonUpdate(collisions){
-
-    const thisCollider = this.getCurrentCollider()
-    collisions.forEach(x=>{
-      const collides = thisCollider.collidesWith(x)
-
-      if (collides){
-        const response = Collider.calculateCollision(thisCollider, x, true)
-
-        this.pos.x += response.overlap.x * response.shortestAxis.x
-        this.pos.y += response.overlap.y * response.shortestAxis.y
-
-        // this.vel.x *= -response.shortestAxis.x
-        // this.vel.y *= -response.shortestAxis.y
-      }
-    })
-    this.pos.add(this.vel)
+  commonUpdate(collisions, grid=[]){
     this.vel.add(this.acc)
     this.acc.mult(0)
+    const frVel = p5.Vector.mult(this.vel, 1/frameRate())
+
+    const newPosition = p5.Vector.add(this.pos, frVel)
+
+    const thisCollider = this.getCurrentCollider()
+    const updateInCol = thisCollider.calculateCollision(
+      grid,
+      newPosition,
+      this.pos,
+      frVel
+    )
+
+    const updatedPos = updateInCol.position
+
+    // this.pos.add(frVel)
+    const newColls = updateInCol.collisions
+    if (newColls[0] || newColls[1]){
+      this.vel.x = 0
+    }
+
+    if (newColls[2] || newColls[3]){
+      this.vel.y = 0
+    }
+
+    this.pos = updatedPos
+    this.lastCollisions = newColls
   }
 
   getCurrentCollider(){
@@ -70,5 +112,5 @@ class GameObject{
       this.getCurrentCollider().render()
     this.getCurrentCollider().update()
     pop()
-    }
+  }
 }

@@ -15,13 +15,13 @@ class Character extends GameObject{
         this.state           = 'still'
         this.prevState       = ''
 
-        this.maxSpeedRunX    = 4
+        this.maxSpeedRunX    = 4 * 60
         this.running         = false
-        this.runForce        = createVector(0.1, 0)
+        this.runForce        = createVector(0.1 * 60, 0)
 
-        this.maxSpeedX       = 2
-        this.maxSpeedY       = 5
-        this.jumpForce       = createVector(0, -3)
+        this.maxSpeedX       = 2 * 60
+        this.maxSpeedY       = 4 * 60
+        this.jumpForce       = createVector(0, -3 * 40)
 
         this.rotating        = false
         this.jumpingReleased = false
@@ -60,14 +60,14 @@ class Character extends GameObject{
             } else{
                 this.vel.x *= 0.7
             }
-            if(abs(this.vel.x) < 0.01){
+            if(abs(this.vel.x) < 1){
                 this.vel.x = 0
             }
         }
 
         if(keyIsDown(32) || keyIsDown(68)){
             // Jump
-            if(!this.jumping){
+            if(!this.jumping && this.lastCollisions[3]){
                 this.applyForce(this.jumpForce)
                 this.jumping = true
 
@@ -132,20 +132,14 @@ class Character extends GameObject{
         }
     }
 
-    update(collisions){
-
-
+    update(collisions, grid=[]){
         // Collision detection must go here.
-        this.commonUpdate(collisions)
         this.updateControls()
+        this.commonUpdate(collisions, grid)
 
-        const floorHeight = canvasSz.y - 32
-
-        const currentCol = this.getCurrentCollider()
-
-        if (this.vel.y > 0 && this.pos.y >= floorHeight){
+        if (this.lastCollisions[3]){
+            // console.log("Coll")
             this.vel.y = 0
-            this.pos.y = floorHeight
 
             this.jumping = false
             this.rotating = false

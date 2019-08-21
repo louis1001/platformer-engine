@@ -15,6 +15,8 @@ class Block extends GameObject{
     }
 
     update(){
+        this.vel.add(this.acc)
+        this.pos.add(this.vel)
         this.updateAnimation()
     }
 

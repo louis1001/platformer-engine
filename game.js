@@ -2,6 +2,20 @@ function sign(x){
     return x / abs(x)
 }
 
+function fillArray(num, obj=null){
+    const newArr = new Array(num)
+
+    for(let i = 0; i < num; i++){
+        if (obj){
+            newArr[i] = obj();
+        } else {
+            newArr[i] = null;            
+        }
+    }
+
+    return newArr
+}
+
 function fromArrayToColor(cRGB) {
     let hexColor = ""
 
@@ -21,6 +35,54 @@ const colorToObject = {
         type:       "block",
         name:       "question-block"
     },
+    "F6B55DFF": {
+        type:       "block",
+        name:       "ground-fill"
+    },
+    "F9471FFF": {
+        type:       "block",
+        name:       "ground-out-corner-left"
+    },
+    "261FF9FF": {
+        type:       "block",
+        name:       "ground-out-corner-right"
+    },
+    "09DE23FF": {
+        type:       "block",
+        name:       "ground-in-corner-left"
+    },
+    "0AF3C9FF": {
+        type:       "block",
+        name:       "ground-in-corner-right"
+    },
+    "AA00FFFF": {
+        type:       "block",
+        name:       "ground-flat-top"
+    },
+    "FC653CFF": {
+        type:       "block",
+        name:       "ground-flat-left"
+    },
+    "0963DEFF": {
+        type:       "block",
+        name:       "ground-flat-right"
+    },
+    "2D2C2DFF": {
+        type:       "block",
+        name:       "ground-flat-line-right"
+    },
+    "767178FF": {
+        type:       "block",
+        name:       "ground-flat-line-left"
+    },
+    "55005AFF": {
+        type:       "block",
+        name:       "ground-flat-top-right"
+    },
+    "F000FFFF": {
+        type:       "block",
+        name:       "ground-flat-top-left"
+    },
     "856B22FF": {
         type:       "spawn",
         direction:  "right"
@@ -39,9 +101,9 @@ class Game{
         this.blocks = []
         this.spawnPoints = []
 
-        this.gravity = createVector(0, 0.5)
+        this.gravity = createVector(0, 0.5 * 60)
 
-        this.map = loadImage("resources/maps/" + mapName + ".png", this.setupMap.bind(this))
+        this.map = loadImage("resources/maps/" + mapName + ".png", this.setupImageMap.bind(this))
 
         this.controls = {
             jump  : 32,
@@ -52,9 +114,20 @@ class Game{
             up    : UP_ARROW,
             down  : DOWN_ARROW
         }
+
+        GameObject.getTile = (_x, _y)=>{
+            const x = Math.floor(_x)
+            const y = Math.floor(_y)
+            if (x >= 0 && x < this.map.width &&
+                y >= 0 && y < this.map.height){
+                return this.mapGrid[x][y]
+            }
+        }
     }
 
-    setupMap(imageMap){
+    setupImageMap(imageMap){
+        this.mapGrid = fillArray(imageMap.width, ()=>fillArray(imageMap.height))
+
         for (let j = 0; j < imageMap.height; j++){
             for (let i = 0; i < imageMap.width; i++){
                 const currentPixel = imageMap.get(i, j)
@@ -66,6 +139,7 @@ class Game{
 
                     if (!objectFromPixel){
                         console.error("Unknown Block X. Error in the map.\n"+hexColor)
+                        console.log("At (" + i + ", " + j + ")")
                         continue
                     }
 
@@ -84,6 +158,8 @@ class Game{
                                 objectFromPixel.name,
                                 createVector(i * 16, j * 16)
                             )
+
+                            this.mapGrid[i][j] = newBlock
 
                             this.gameObjects.push(newBlock)
                             this.blocks.push(newBlock)
@@ -120,15 +196,19 @@ class Game{
     }
 
     render(){
+        if (this.players[0]){
+            image(backg, this.players[0].pos.x, 0)
+        }
+
         this.gameObjects.forEach(x => {
             x.draw()
         })
     }
 
     update(){
-        this.blocks.forEach(x => {
-            x.applyForce(this.gravity)
-        })
+        // this.blocks.forEach(x => {
+        //     x.applyForce(this.gravity)
+        // })
 
         this.entities.forEach(x => {
             x.applyForce(this.gravity)
@@ -139,7 +219,7 @@ class Game{
         })
 
         this.entities.forEach((x, i) => {
-            x.update(this.gameObjects.map(b=>b.getCurrentCollider()))
+            x.update(this.gameObjects.map(b=>b.getCurrentCollider()), this.mapGrid)
         })
     }
 
